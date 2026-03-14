@@ -46,6 +46,7 @@
     "check": "pnpm exec biome check . --write"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
     "@types/node": "^22.0.0",
     "astro": "^6.0.4",
     "tsdown": "^0.21.0",
