@@ -1,4 +1,4 @@
-# astro-markdown-export, enables content negotiation for your blog directly from Astro to make what truly matters available to AI agents 🪵
+# astro-markdown-export, enables content negotiation directly from Astro to make what truly matters available to AI agents 🪵
 
 [![npm](https://img.shields.io/npm/v/@louisbrulenaudet/astro-markdown-export?logo=npm)](https://www.npmjs.com/package/@louisbrulenaudet/astro-markdown-export)
 [![Astro](https://img.shields.io/badge/framework-astro-blueviolet?logo=astro)](https://astro.build/)
