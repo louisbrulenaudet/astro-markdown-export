@@ -1,0 +1,81 @@
+name: Release (version bump and publish)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Bump version and create tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    permissions:
+      contents: write
+
+    env:
+      DO_NOT_TRACK: "1"
+      TELEMETRY_DISABLED: "1"
+      ASTRO_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull latest
+        run: git pull origin "${{ github.ref_name }}" --rebase
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm run test:run
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Bump version
+        id: bump
+        run: |
+          pnpm version ${{ github.event.inputs.bump }} --no-git-tag-version
+          NEW_VERSION=$(jq -r '.version' package.json)
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Bumped to $NEW_VERSION"
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml
+          git diff --staged --quiet || git commit -m "chore: release v${{ steps.bump.outputs.new_version }}"
+          git push
+
+      - name: Create and push tag
+        run: |
+          git tag "v${{ steps.bump.outputs.new_version }}"
+          git push origin "v${{ steps.bump.outputs.new_version }}"
